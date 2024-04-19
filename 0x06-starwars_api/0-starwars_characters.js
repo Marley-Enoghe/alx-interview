@@ -1,45 +1,24 @@
 #!/usr/bin/node
+/* prints all characters of star wars movie passed as commandline argument */
 
 const request = require("request");
 
 const movieId = process.argv[2];
 
-// Make HTTP GET request to fetch movie information
-request(`https://swapi.dev/api/films/${movieId}/`, (error, response, body) => {
-  if (error) {
-    console.error("Error fetching movie information:", error);
-    return;
-  }
+const url = `https://swapi-api.hbtn.io/api/films/${movieId}`;
 
-  if (response.statusCode !== 200) {
-    console.error(
-      "Failed to fetch movie information. Status code:",
-      response.statusCode
-    );
-    return;
-  }
+request(url, async (err, res, body) => {
+  err && console.log(err);
 
-  const movieData = JSON.parse(body);
-  const characterURLs = movieData.characters;
+  const charactersArray = JSON.parse(res.body).characters;
+  for (const character of charactersArray) {
+    await new Promise((resolve, reject) => {
+      request(character, (err, res, body) => {
+        err && console.log(err);
 
-  // Make individual requests for each character
-  characterURLs.forEach((characterURL) => {
-    request(characterURL, (charError, charResponse, charBody) => {
-      if (charError) {
-        console.error("Error fetching character information:", charError);
-        return;
-      }
-
-      if (charResponse.statusCode !== 200) {
-        console.error(
-          "Failed to fetch character information. Status code:",
-          charResponse.statusCode
-        );
-        return;
-      }
-
-      const characterData = JSON.parse(charBody);
-      console.log(characterData.name);
+        console.log(JSON.parse(body).name);
+        resolve();
+      });
     });
-  });
+  }
 });
